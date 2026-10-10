@@ -16,10 +16,22 @@ public class Jugador {
         this.paso = false;
     }
 
-    public String getNombre() { return nombre; }
-    public ArrayList<CartaInglesa> getMano() { return mano; }
-    public boolean isPlantado() { return plantado; }
-    public void setPlantado(boolean plantado) { this.plantado = plantado; }
-    public boolean isPaso() { return paso; }
-    public void setPaso(boolean paso) { this.paso = paso; }
+    public String getNombre() {
+        return nombre;
+    }
+    public ArrayList<CartaInglesa> getMano() {
+        return mano;
+    }
+    public boolean isPlantado() {
+        return plantado;
+    }
+    public void setPlantado(boolean plantado) {
+        this.plantado = plantado;
+    }
+    public boolean isPaso() {
+        return paso;
+    }
+    public void setPaso(boolean paso) {
+        this.paso = paso;
+    }
 }

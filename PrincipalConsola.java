@@ -1,102 +1,60 @@
+package org.example;
+
 import blackjack.JuegoBlackjack;
 import blackjack.Jugador;
-import DeckOfCards.CartaInglesa;
 import java.util.Scanner;
 
 public class PrincipalConsola {
 
-    private static String obtenerSimbolo(CartaInglesa c) {
-        switch (c.getValor()) {
-            case 1:
-                return "A";
-            case 11:
-                return "J";
-            case 12:
-                return "Q";
-            case 13:
-                return "K";
-            default:
-                return String.valueOf(c.getValor());
-        }
-    }
-
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
         JuegoBlackjack juego = new JuegoBlackjack();
 
-        System.out.println("==================================");
-        System.out.println("           BLACKJACK 21           ");
-        System.out.println("==================================");
-        System.out.print("Ingresa el número de jugadores (1-4): ");
-
-        int numJugadores = sc.nextInt();
-        while (numJugadores < 1 || numJugadores > 4) {
-            System.out.print("NO SE PUEDE. Elige entre 1 y 4 jugadores: ");
-            numJugadores = sc.nextInt();
-        }
+        System.out.println("=== JUEGO DEL 21 (BLACKJACK) ===");
+        System.out.print("Ingrese el numero de jugadores: ");
+        int numJugadores = scanner.nextInt();
+        scanner.nextLine();
 
         juego.iniciarJuego(numJugadores);
-        boolean seguirJugando = true;
 
-        while (seguirJugando) {
-            System.out.println("\n----------------------------------");
-            System.out.println("          NUEVA RONDA             ");
-            System.out.println("----------------------------------");
+        while (!juego.isJuegoTerminado()) {
+            Jugador jugadorActual = juego.getJugadorActual();
 
-            CartaInglesa cartaCrupier = juego.getManoCrupier().get(0);
-            System.out.println("Carta visible del Crupier: [" + obtenerSimbolo(cartaCrupier) + "]");
+            System.out.println("\n----------------------------------------");
+            System.out.println("Turno de: " + jugadorActual.getNombre());
+            System.out.println("Cartas: " + jugadorActual.getMano());
+            System.out.println("Puntaje actual: " + juego.calcularPuntaje(jugadorActual.getMano()));
+            System.out.println("----------------------------------------");
+            System.out.println("1: Pedir Carta");
+            System.out.println("2: Plantarse");
+            System.out.println("3: Deshacer Movimiento (Undo)");
+            System.out.print("Seleccione una opcion: ");
 
-            while (!juego.isJuegoTerminado()) {
-                Jugador jActual = juego.getJugadorActual();
-                if (jActual == null) break;
+            int opcion = scanner.nextInt();
+            scanner.nextLine();
 
-                System.out.println("\n>>> TURNO DE: " + jActual.getNombre().toUpperCase());
-
-                boolean turnoActivo = true;
-                while (turnoActivo && !juego.isJuegoTerminado() && juego.getJugadorActual() == jActual) {
-                    int puntos = juego.calcularPuntaje(jActual.getMano());
-                    System.out.print("Cartas: ");
-                    for (CartaInglesa c : jActual.getMano()) {
-                        System.out.print("[" + obtenerSimbolo(c) + "] ");
-                    }
-                    System.out.println("| Puntos: " + puntos);
-
-                    if (puntos >= 21) {
-                        break;
-                    }
-
-                    System.out.print("¿Que quieres hacer?(1: Pedir Carta | 2: Plantarse): ");
-                    int opcion = sc.nextInt();
-
-                    if (opcion == 1) {
-                        juego.pedirCarta();
+            switch (opcion) {
+                case 1:
+                    juego.pedirCarta();
+                    break;
+                case 2:
+                    juego.plantarse();
+                    break;
+                case 3:
+                    if (juego.deshacerMovimiento()) {
+                        System.out.println("¡Movimiento deshecho con exito!");
                     } else {
-                        juego.plantarse();
-                        turnoActivo = false;
+                        System.out.println("No es posible deshacer el movimiento (historial vacio o turno finalizado).");
                     }
-                }
-            }
-
-            System.out.println("\n==================================");
-            System.out.println("       RESULTADOS DE LA RONDA      ");
-            System.out.println("==================================");
-            System.out.print("Mano final del Crupier: ");
-            for (CartaInglesa c : juego.getManoCrupier()) {
-                System.out.print("[" + obtenerSimbolo(c) + "] ");
-            }
-            System.out.println("| Puntos: " + juego.calcularPuntaje(juego.getManoCrupier()));
-            System.out.println("Resultados: " + juego.getMensajeEstado());
-
-            System.out.print("\n¿Quieres jugar otra ronda? (1: Sí | 2: Salir): ");
-            int opcionRonda = sc.nextInt();
-            if (opcionRonda == 1) {
-                juego.nuevaRonda();
-            } else {
-                seguirJugando = false;
+                    break;
+                default:
+                    System.out.println("Opcion no valida. Intente de nuevo.");
+                    break;
             }
         }
 
-        System.out.println("\nGracias por jugar");
-        sc.close();
+        System.out.println("\n=== FIN DE LA PARTIDA ===");
+        System.out.println(juego.getMensajeEstado());
+        scanner.close();
     }
 }

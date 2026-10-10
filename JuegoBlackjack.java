@@ -2,6 +2,7 @@ package blackjack;
 
 import DeckOfCards.CartaInglesa;
 import DeckOfCards.Mazo;
+import org.example.Pila;
 import java.util.ArrayList;
 
 public class JuegoBlackjack {
@@ -12,14 +13,16 @@ public class JuegoBlackjack {
     private boolean juegoTerminado;
     private String mensajeEstado;
 
+    private Pila<Movimiento> historialMovimientos;
+
     public JuegoBlackjack() {
         jugadores = new ArrayList<>();
         manoCrupier = new ArrayList<>();
+        historialMovimientos = new Pila<>(100);
         reiniciarMazo();
     }
 
     public void reiniciarMazo() {
-
         mazo = new Mazo();
     }
 
@@ -32,11 +35,13 @@ public class JuegoBlackjack {
     }
 
     public void nuevaRonda() {
-        if (mazo.getCartas().size() < (jugadores.size() + 1) * 4) {
+        if (mazo.getCantidadCartas() < (jugadores.size() + 1) * 4) {
             reiniciarMazo();
         }
 
         manoCrupier.clear();
+        historialMovimientos = new Pila<>(100);
+
         for (Jugador j : jugadores) {
             j.getMano().clear();
             j.setPlantado(false);
@@ -66,6 +71,9 @@ public class JuegoBlackjack {
         if (juegoTerminado || turnoActual >= jugadores.size()) return;
 
         Jugador jActual = jugadores.get(turnoActual);
+        boolean estabaPaso = jActual.isPaso();
+        boolean estabaPlantado = jActual.isPlantado();
+
         CartaInglesa c = mazo.obtenerUnaCarta();
         if (c != null) {
             c.makeFaceUp();
@@ -73,23 +81,60 @@ public class JuegoBlackjack {
         }
 
         int puntaje = calcularPuntaje(jActual.getMano());
+
         if (puntaje > 21) {
             jActual.setPaso(true);
+            historialMovimientos = new Pila<>(100);
             siguienteTurno();
-        } else if (puntaje == 21) {
-            jActual.setPlantado(true);
-            siguienteTurno();
+        } else {
+            historialMovimientos.push(new Movimiento(turnoActual, Movimiento.TipoAccion.PEDIR, c, estabaPaso, estabaPlantado));
+            if (puntaje == 21) {
+                jActual.setPlantado(true);
+                siguienteTurno();
+            }
         }
     }
 
     public void plantarse() {
         if (juegoTerminado || turnoActual >= jugadores.size()) return;
-        jugadores.get(turnoActual).setPlantado(true);
+        Jugador jActual = jugadores.get(turnoActual);
+
+        historialMovimientos.push(new Movimiento(turnoActual, Movimiento.TipoAccion.PLANTARSE, null, jActual.isPaso(), jActual.isPlantado()));
+        jActual.setPlantado(true);
         siguienteTurno();
+    }
+
+    public boolean deshacerMovimiento() {
+        if (historialMovimientos.pila_vacia() || juegoTerminado) {
+            return false;
+        }
+
+        Movimiento mov = historialMovimientos.pop();
+
+        turnoActual = mov.getJugadorIndex();
+        Jugador j = jugadores.get(turnoActual);
+
+        j.setPaso(mov.isEstabaPaso());
+        j.setPlantado(mov.isEstabaPlantado());
+
+        if (mov.getTipo() == Movimiento.TipoAccion.PEDIR) {
+            if (!j.getMano().isEmpty()) {
+                CartaInglesa cartaRemovida = j.getMano().remove(j.getMano().size() - 1);
+                mazo.regresarCartaAlFondo(cartaRemovida);
+            }
+        }
+
+        return true;
+    }
+
+    public boolean puedeDeshacer() {
+        return !historialMovimientos.pila_vacia() && !juegoTerminado;
     }
 
     private void siguienteTurno() {
         turnoActual++;
+        historialMovimientos = new Pila<>(100);
+
         if (turnoActual >= jugadores.size()) {
             juegoTerminado = true;
             jugarCrupier();
@@ -131,8 +176,6 @@ public class JuegoBlackjack {
 
         for (Jugador j : jugadores) {
             int pJ = calcularPuntaje(j.getMano());
-
-
             mensajeEstado += j.getNombre() + ": ";
 
             if (pJ > 21) {
@@ -148,8 +191,8 @@ public class JuegoBlackjack {
     }
 
     public int calcularPuntaje(ArrayList<CartaInglesa> mano) {
-        int total=0;
-        int ases=0;
+        int total = 0;
+        int ases = 0;
 
         for (CartaInglesa c : mano) {
             int v = c.getValor();
@@ -171,13 +214,22 @@ public class JuegoBlackjack {
         return total;
     }
 
-    public ArrayList<Jugador> getJugadores() { return jugadores; }
-    public ArrayList<CartaInglesa> getManoCrupier() { return manoCrupier; }
-    public int getTurnoActual() { return turnoActual; }
+    public ArrayList<Jugador> getJugadores() {
+        return jugadores;
+    }
+    public ArrayList<CartaInglesa> getManoCrupier() {
+        return manoCrupier;
+    }
+    public int getTurnoActual() {
+        return turnoActual;
+    }
     public Jugador getJugadorActual() {
         if (turnoActual >= 0 && turnoActual < jugadores.size()) return jugadores.get(turnoActual);
         return null;
     }
-    public boolean isJuegoTerminado() { return juegoTerminado; }
-    public String getMensajeEstado() { return mensajeEstado; }
+    public boolean isJuegoTerminado() {
+        return juegoTerminado; }
+    public String getMensajeEstado() {
+        return mensajeEstado;
+    }
 }

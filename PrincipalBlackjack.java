@@ -28,6 +28,7 @@ public class PrincipalBlackjack extends Application {
 
     private Button btnPedir;
     private Button btnPlantarse;
+    private Button btnUndo;
     private Button btnNuevaRonda;
     private Button btnCambiarModo;
 
@@ -104,11 +105,13 @@ public class PrincipalBlackjack extends Application {
 
         btnPedir = new Button("Pedir Carta");
         btnPlantarse = new Button("Plantarse");
+        btnUndo = new Button("Deshacer (Undo)");
         btnNuevaRonda = new Button("Nueva Ronda");
         btnCambiarModo = new Button("Cambiar Jugadores");
 
         estilarBoton(btnPedir);
         estilarBoton(btnPlantarse);
+        estilarBoton(btnUndo);
         estilarBoton(btnNuevaRonda);
         estilarBoton(btnCambiarModo);
 
@@ -122,6 +125,11 @@ public class PrincipalBlackjack extends Application {
             actualizarVista();
         });
 
+        btnUndo.setOnAction(e -> {
+            juego.deshacerMovimiento();
+            actualizarVista();
+        });
+
         btnNuevaRonda.setOnAction(e -> {
             juego.nuevaRonda();
             actualizarVista();
@@ -129,7 +137,7 @@ public class PrincipalBlackjack extends Application {
 
         btnCambiarModo.setOnAction(e -> mostrarMenuSeleccion());
 
-        controles.getChildren().addAll(btnPedir, btnPlantarse, btnNuevaRonda, btnCambiarModo);
+        controles.getChildren().addAll(btnPedir, btnPlantarse, btnUndo, btnNuevaRonda, btnCambiarModo);
         root.setBottom(controles);
 
         actualizarVista();
@@ -171,6 +179,8 @@ public class PrincipalBlackjack extends Application {
             boxJ.getChildren().addAll(lblNom, cartasJ);
             contenedorJugadores.getChildren().add(boxJ);
         }
+
+        btnUndo.setDisable(!juego.puedeDeshacer());
 
         if (juego.isJuegoTerminado()) {
             int pCrupier = juego.calcularPuntaje(juego.getManoCrupier());
